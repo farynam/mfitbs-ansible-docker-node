@@ -1,5 +1,3 @@
 ---
 # vars file for docker_node
 
-ext_if: eth0
-inner_if: docker0

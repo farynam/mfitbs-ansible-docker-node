@@ -1,22 +1,19 @@
 #!/bin/bash
+export PATH=/sbin/:{$PATH}
 
+iptables -P INPUT DROP
+iptables -P FORWARD DROP
 
-/sbin/iptables -t DOCKER-USER -F # FORWARD
+iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+iptables -A INPUT -i lo -j ACCEPT
+iptables -A INPUT -p tcp -s 0.0.0.0/0 -m state --state NEW -m multiport --dports {{tcp_ports_allowed}} -j ACCEPT
+iptables -A INPUT -p udp -s 0.0.0.0/0 -m state --state NEW -m multiport --dports {{udp_ports_allowed}} -j ACCEPT
+iptables -A INPUT -j DROP
 
-/sbin/iptables -P INPUT DROP
+#allow connections to the docker on external interface
+iptables -A FORWARD -i docker0 -o {{ext_if}} -j ACCEPT
+iptables -A FORWARD -i {{ext_if}} -o docker0 -j ACCEPT
 
-
-/sbin/iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
-/sbin/iptables -A INPUT -i lo -j ACCEPT
-/sbin/iptables -A INPUT -s "172.17.0.0/16" -i {{ inner_if }} -p icmp -j ACCEPT
-/sbin/iptables -A INPUT -p tcp -m tcp -m state --state NEW --dport 22 -j ACCEPT
-/sbin/iptables -A INPUT -s "172.17.0.0/16" -i {{ inner_if }} -p udp -m tcp -m udp --state NEW --dport 67 -j ACCEPT
-/sbin/iptables -A INPUT -s "172.17.0.0/16" -i {{ inner_if }} -j REJECT --reject-with icmp-host-prohibited
-
-
-# performance reasons
-/sbin/iptables -A DOCKER-USER -d "172.17.0.0/16" -i {{ inner_if }} -j DROP
-
-/sbin/iptables -A DOCKER-USER -s "172.17.0.0/16" -i {{ inner_if }} -j ACCEPT
-/sbin/iptables -A DOCKER-USER -d "172.17.0.0/16" -i {{ ext_if }} -o {{ inner_if }} -j ACCEPT
-/sbin/iptables -A DOCKER-USER -i {{ ext_if }} -j REJECT --reject-with icmp-host-prohibited
+#allow connections to the docker on internal interface
+iptables -A FORWARD -i docker0 -o {{inner_if}} -j ACCEPT
+iptables -A FORWARD -i {{inner_if}} -o docker0 -j ACCEPT

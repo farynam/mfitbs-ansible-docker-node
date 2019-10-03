@@ -58,7 +58,7 @@
 
 - name: Template iptables
   template:
-    src: templates/iptables.yml
+    src: templates/iptables_new.yml
     dest: /etc/iptables/rules.out
     mode: '0760'
 
@@ -78,4 +78,6 @@
   shell: "/sbin/iptables-save > /etc/iptables/rules.v4"
   when: oldRules.stat.checksum is undefined or newRules.stat.checksum != oldRules.stat.checksum
 
-
+- name: var out2
+  debug:
+    msg: "{{tcp_ports_allowed}}"
