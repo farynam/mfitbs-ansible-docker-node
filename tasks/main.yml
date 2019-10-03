@@ -1,0 +1,81 @@
+---
+# tasks file for docker_node
+- include_role:
+    name: "{{ roleinputvar }}"
+  loop:
+    - farynam.mfitbs_disable_ipv6
+  loop_control:
+    loop_var: roleinputvar
+
+- name: change apt perms
+  shell: chown _apt /etc/apt/trusted.gpg
+
+- name: Install requirements
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - software-properties-common
+      - gnupg2
+
+- name: Import certs
+  apt_key:
+    url: https://download.docker.com/linux/debian/gpg
+    state: present
+
+- name: Check whether /etc/apt/sources.list contains docker repo
+  command: grep -Fq "https://download.docker.com/linux/debian" /etc/apt/sources.list
+  register: dockerInRepo
+  check_mode: no
+  ignore_errors: yes
+
+- name: Add repository
+  shell: add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
+  when: not dockerInRepo
+
+- name: update
+  apt:
+    update_cache: yes
+
+- name: Install docker
+  apt:
+    name: docker-ce
+
+- name: disable unwanted services
+  shell: systemctl disable exim4 avahi-daemon
+
+- name: Give node a meaningful name
+  shell: echo "{{inventory_hostname}}" > /etc/hostname
+
+- name: Install iptables-persistent
+  apt:
+    name: iptables-persistent
+
+- name: Save old iptables
+  shell: cp /etc/iptables/rules.out /etc/iptables/rules_old.out
+  args:
+    removes: /etc/iptables/rules.out
+
+- name: Template iptables
+  template:
+    src: templates/iptables.yml
+    dest: /etc/iptables/rules.out
+    mode: '0760'
+
+- stat:
+    path: /etc/iptables/rules.out
+  register: newRules
+
+- stat:
+    path: /etc/iptables/rules_old.out
+  register: oldRules
+
+- name: Run new rules
+  shell: /etc/iptables/rules.out
+  when: oldRules.stat.checksum is undefined or newRules.stat.checksum != oldRules.stat.checksum
+
+- name: Save iptables rules
+  shell: "/sbin/iptables-save > /etc/iptables/rules.v4"
+  when: oldRules.stat.checksum is undefined or newRules.stat.checksum != oldRules.stat.checksum
+
+

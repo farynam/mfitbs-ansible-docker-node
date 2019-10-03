@@ -1,0 +1,22 @@
+#!/bin/bash
+
+
+/sbin/iptables -t DOCKER-USER -F # FORWARD
+
+/sbin/iptables -P INPUT DROP
+
+
+/sbin/iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+/sbin/iptables -A INPUT -i lo -j ACCEPT
+/sbin/iptables -A INPUT -s "172.17.0.0/16" -i {{ inner_if }} -p icmp -j ACCEPT
+/sbin/iptables -A INPUT -p tcp -m tcp -m state --state NEW --dport 22 -j ACCEPT
+/sbin/iptables -A INPUT -s "172.17.0.0/16" -i {{ inner_if }} -p udp -m tcp -m udp --state NEW --dport 67 -j ACCEPT
+/sbin/iptables -A INPUT -s "172.17.0.0/16" -i {{ inner_if }} -j REJECT --reject-with icmp-host-prohibited
+
+
+# performance reasons
+/sbin/iptables -A DOCKER-USER -d "172.17.0.0/16" -i {{ inner_if }} -j DROP
+
+/sbin/iptables -A DOCKER-USER -s "172.17.0.0/16" -i {{ inner_if }} -j ACCEPT
+/sbin/iptables -A DOCKER-USER -d "172.17.0.0/16" -i {{ ext_if }} -o {{ inner_if }} -j ACCEPT
+/sbin/iptables -A DOCKER-USER -i {{ ext_if }} -j REJECT --reject-with icmp-host-prohibited
