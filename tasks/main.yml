@@ -55,14 +55,14 @@
     loop_var: service
 
 - name: Give node a meaningful name
-  shell: echo "{{inventory_hostname}}" > /etc/hostname
+  shell: echo "{{ inventory_hostname }}" > /etc/hostname
 
 - name: Install iptables-persistent
   apt:
     name: iptables-persistent
 
 - name: Save old iptables
-  shell: cp /etc/iptables/rules.out /etc/iptables/rules_old.out
+  command: cp /etc/iptables/rules.out /etc/iptables/rules_old.out
   args:
     removes: /etc/iptables/rules.out
 
@@ -72,16 +72,18 @@
     dest: /etc/iptables/rules.out
     mode: '0760'
 
-- stat:
+- name: Grab new rules
+  stat:
     path: /etc/iptables/rules.out
   register: newRules
 
-- stat:
+- name: Grab old rules
+  stat:
     path: /etc/iptables/rules_old.out
   register: oldRules
 
 - name: Run new rules
-  shell: /etc/iptables/rules.out
+  command: /etc/iptables/rules.out
   when: oldRules.stat.checksum is undefined or newRules.stat.checksum != oldRules.stat.checksum
 
 - name: Save iptables rules
