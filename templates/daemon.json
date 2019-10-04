@@ -1,4 +1,0 @@
-{
-  "ip" : "{{ publish_ip }}",
-  "iptables": false
-}

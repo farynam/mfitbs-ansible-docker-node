@@ -8,7 +8,9 @@
     loop_var: roleinputvar
 
 - name: change apt perms
-  shell: chown _apt /etc/apt/trusted.gpg
+  file:
+    path: /etc/apt/trusted.gpg
+    owner: _apt
 
 - name: Install requirements
   apt:
@@ -39,10 +41,18 @@
 
 - name: Install docker
   apt:
-    name: docker-ce
+    name: docker-ce=5:19.03.2~3-0~debian-stretch
 
-- name: disable unwanted services
-  shell: systemctl disable exim4 avahi-daemon
+- name: Disable unwanted services
+  systemd:
+    enabled: false
+    state: stopped
+    name: "{{ service }}"
+  loop:
+    - exim4
+    - avahi-daemon
+  loop_control:
+    loop_var: service
 
 - name: Give node a meaningful name
   shell: echo "{{inventory_hostname}}" > /etc/hostname
@@ -58,7 +68,7 @@
 
 - name: Template iptables
   template:
-    src: templates/iptables_new.yml
+    src: templates/iptables.tpl
     dest: /etc/iptables/rules.out
     mode: '0760'
 
@@ -77,7 +87,3 @@
 - name: Save iptables rules
   shell: "/sbin/iptables-save > /etc/iptables/rules.v4"
   when: oldRules.stat.checksum is undefined or newRules.stat.checksum != oldRules.stat.checksum
-
-- name: var out2
-  debug:
-    msg: "{{tcp_ports_allowed}}"
