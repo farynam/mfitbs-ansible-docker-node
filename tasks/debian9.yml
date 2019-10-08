@@ -33,7 +33,7 @@
 
 - name: Add repository
   shell: add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
-  when: not dockerInRepo
+  when: dockerInRepo.rc
 
 - name: update
   apt:
@@ -61,31 +61,16 @@
   apt:
     name: iptables-persistent
 
-- name: Save old iptables
-  command: cp /etc/iptables/rules.out /etc/iptables/rules_old.out
-  args:
-    removes: /etc/iptables/rules.out
-
 - name: Template iptables
   template:
     src: templates/iptables.tpl
-    dest: /etc/iptables/rules.out
+    dest: /etc/iptables/rules-1.out
     mode: '0760'
 
-- name: Grab new rules
-  stat:
-    path: /etc/iptables/rules.out
-  register: newRules
-
-- name: Grab old rules
-  stat:
-    path: /etc/iptables/rules_old.out
-  register: oldRules
-
 - name: Run new rules
-  command: /etc/iptables/rules.out
-  when: oldRules.stat.checksum is undefined or newRules.stat.checksum != oldRules.stat.checksum
+  command: /etc/iptables/rules-1.out
+  register: rules_run
 
 - name: Save iptables rules
   shell: "/sbin/iptables-save > /etc/iptables/rules.v4"
-  when: oldRules.stat.checksum is undefined or newRules.stat.checksum != oldRules.stat.checksum
+  when: rules_run.rc == 0

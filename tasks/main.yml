@@ -8,4 +8,4 @@
   import_tasks: other.yml
   when: >
     ansible_distribution != OS_SUPORTED_DIST
-    AND ansible_distribution_release != OS_SUPORTED_REL
+    and ansible_distribution_release != OS_SUPORTED_REL

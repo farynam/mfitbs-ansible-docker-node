@@ -1,8 +1,12 @@
+#!/bin/bash
+
 iptables -t nat -P PREROUTING ACCEPT
 iptables -P INPUT DROP
 
 iptables -F DOCKER-USER
-iptables -F DOCKER-INPUT
+
+iptables -X DOCKER-INPUT
+iptables -t nat -X DOCKER-BLOCK
 
 iptables -t nat -N DOCKER-BLOCK
 
