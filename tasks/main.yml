@@ -7,11 +7,6 @@
   loop_control:
     loop_var: roleinputvar
 
-- name: change apt perms
-  file:
-    path: /etc/apt/trusted.gpg
-    owner: _apt
-
 - name: Install requirements
   apt:
     name:
@@ -42,17 +37,6 @@
 - name: Install docker
   apt:
     name: docker-ce=5:19.03.2~3-0~debian-stretch
-
-- name: Disable unwanted services
-  systemd:
-    enabled: false
-    state: stopped
-    name: "{{ service }}"
-  loop:
-    - exim4
-    - avahi-daemon
-  loop_control:
-    loop_var: service
 
 - name: Give node a meaningful name
   shell: echo "{{ inventory_hostname }}" > /etc/hostname
