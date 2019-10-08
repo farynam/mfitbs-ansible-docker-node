@@ -18,6 +18,7 @@ iptables -t nat -A DOCKER-BLOCK -p udp -m state --state NEW -m multiport --dport
 
 iptables -N DOCKER-INPUT
 iptables -I INPUT -j DOCKER-INPUT
+iptables -A DOCKER-INPUT -p icmp --icmp-type echo-request -j ACCEPT
 iptables -A DOCKER-INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
 iptables -A DOCKER-INPUT -p tcp -m state --state NEW -m multiport --dports {{ tcp_ports_allowed }} -j ACCEPT
 iptables -A DOCKER-INPUT -p udp -m state --state NEW -m multiport --dports {{ udp_ports_allowed }} -j ACCEPT
