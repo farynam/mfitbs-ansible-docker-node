@@ -1,0 +1,4 @@
+- name: Unsupported OS
+  debug:
+    msg: "Unsupported OS"
+
