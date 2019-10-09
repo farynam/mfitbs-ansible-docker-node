@@ -68,11 +68,13 @@
     src: templates/iptables.tpl
     dest: /etc/iptables/rules-1.out
     mode: '0760'
+    force: no
+  register: result
 
 - name: Run new rules
   command: /etc/iptables/rules-1.out
-  register: rules_run
+  when: result.changed
 
 - name: Save iptables rules
   shell: "/sbin/iptables-save > /etc/iptables/rules.v4"
-  when: rules_run.rc == 0
+  when: result.changed
