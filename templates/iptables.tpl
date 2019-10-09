@@ -5,11 +5,13 @@ iptables -P INPUT DROP
 
 iptables -F DOCKER-USER
 
+iptables -F DOCKER-INPUT
 iptables -X DOCKER-INPUT
+iptables -t nat -F DOCKER-BLOCK
 iptables -t nat -X DOCKER-BLOCK
 
-iptables -t nat -N DOCKER-BLOCK
 
+iptables -t nat -N DOCKER-BLOCK
 iptables -t nat -I PREROUTING -m addrtype --dst-type LOCAL -j RETURN
 iptables -t nat -I PREROUTING -m addrtype --dst-type LOCAL -j DOCKER-BLOCK
 iptables -t nat -A DOCKER-BLOCK -p tcp -m state --state NEW -m multiport --dports {{ tcp_ports_allowed | replace(' ', '') }} -j DOCKER
